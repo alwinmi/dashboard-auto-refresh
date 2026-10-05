@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <button id="start">Open page and start refreshing</button>
+  <button id="stop">Stop refreshing</button>
+  <p id="status">Not started</p>
+
+  <script>
+    const url = "https://roche.service-now.com/now/platform-analytics-workspace/dashboards/params/edit/false/sys-id/84f23971c271d2a1f8aba34ecb6437b2";
+    let targetTab;
+    let timer;
+
+    document.getElementById("start").onclick = () => {
+      targetTab = window.open(url, "autoRefreshTarget");
+
+      if (!targetTab) {
+        document.getElementById("status").textContent =
+          "Popup blocked. Allow popups for this file and try again.";
+        return;
+      }
+
+      clearInterval(timer);
+
+      timer = setInterval(() => {
+        if (targetTab.closed) {
+          clearInterval(timer);
+          document.getElementById("status").textContent =
+            "Stopped because the target tab was closed.";
+          return;
+        }
+
+        targetTab.location.href = url;
+      }, 10000);
+
+      document.getElementById("status").textContent =
+        "Refreshing every 10 seconds.";
+    };
+
+    document.getElementById("stop").onclick = () => {
+      clearInterval(timer);
+      document.getElementById("status").textContent = "Stopped.";
+    };
+  </script>
+</body>
+</html>
