@@ -1,45 +1,387 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Dashboard Auto Refresh</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #172033;
+      background:
+        radial-gradient(circle at top left, #dceaff 0, transparent 35%),
+        linear-gradient(135deg, #f5f8fc, #e7eef8);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 620px;
+      padding: 42px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dce4ef;
+      border-radius: 20px;
+      box-shadow: 0 18px 50px rgba(24, 48, 82, 0.15);
+    }
+
+    .icon {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 34px;
+      background: linear-gradient(135deg, #1565c0, #003b80);
+      border-radius: 18px;
+      box-shadow: 0 10px 24px rgba(0, 75, 160, 0.25);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      color: #0d2b4f;
+      font-size: 30px;
+    }
+
+    .description {
+      max-width: 480px;
+      margin: 0 auto 28px;
+      color: #5d6878;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-width: 190px;
+      padding: 14px 22px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(21, 101, 192, 0.3);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    #start {
+      color: white;
+      background: linear-gradient(135deg, #1565c0, #003b80);
+      box-shadow: 0 8px 18px rgba(0, 75, 160, 0.25);
+    }
+
+    #start:hover:not(:disabled) {
+      box-shadow: 0 12px 24px rgba(0, 75, 160, 0.32);
+    }
+
+    #stop {
+      color: #9e2a2b;
+      background: #fff;
+      border: 2px solid #d8a3a3;
+    }
+
+    #stop:hover:not(:disabled) {
+      background: #fff4f4;
+      border-color: #bf5a5a;
+    }
+
+    .status-box {
+      margin-top: 28px;
+      padding: 17px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #f3f6fa;
+      border: 1px solid #dbe3ed;
+      border-radius: 12px;
+    }
+
+    .status-dot {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+      background: #7a8696;
+      border-radius: 50%;
+    }
+
+    #status {
+      margin: 0;
+      color: #4a5666;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .status-box.running {
+      background: #eef8f2;
+      border-color: #aad5bb;
+    }
+
+    .status-box.running .status-dot {
+      background: #218c4f;
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-box.running #status {
+      color: #17683a;
+    }
+
+    .status-box.stopped {
+      background: #fff8e8;
+      border-color: #e4c986;
+    }
+
+    .status-box.stopped .status-dot {
+      background: #c48300;
+    }
+
+    .status-box.error {
+      background: #fff1f1;
+      border-color: #e5aaaa;
+    }
+
+    .status-box.error .status-dot {
+      background: #c23535;
+    }
+
+    .status-box.error #status {
+      color: #922c2c;
+    }
+
+    .note {
+      margin: 22px 0 0;
+      color: #707b8b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(33, 140, 79, 0.45);
+      }
+
+      70% {
+        box-shadow: 0 0 0 8px rgba(33, 140, 79, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(33, 140, 79, 0);
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 15px;
+      }
+
+      .card {
+        padding: 30px 20px;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
 <body>
-  <button id="start">Open page and start refreshing</button>
-  <button id="stop">Stop refreshing</button>
-  <p id="status">Not started</p>
+  <main class="card">
+    <div class="icon" aria-hidden="true">↻</div>
+
+    <h1>Dashboard Auto Refresh</h1>
+
+    <p class="description">
+      Open the ServiceNow dashboard in a separate tab and automatically
+      refresh it every 10 seconds.
+    </p>
+
+    <div class="button-container">
+      <button id="start" type="button">
+        Start auto refresh
+      </button>
+
+      <button id="stop" type="button" disabled>
+        Stop refreshing
+      </button>
+    </div>
+
+    <div id="statusBox" class="status-box">
+      <span class="status-dot" aria-hidden="true"></span>
+      <p id="status" role="status" aria-live="polite">
+        Auto refresh has not started.
+      </p>
+    </div>
+
+    <p class="note">
+      Keep this controller page open. Allow pop-ups if Chrome asks for
+      permission. The ServiceNow dashboard will open in another tab.
+    </p>
+  </main>
 
   <script>
-    const url = "https://roche.service-now.com/now/platform-analytics-workspace/dashboards/params/edit/false/sys-id/84f23971c271d2a1f8aba34ecb6437b2";
-    let targetTab;
-    let timer;
+    const url =
+      "https://roche.service-now.com/now/platform-analytics-workspace/dashboards/params/edit/false/sys-id/84f23971c271d2a1f8aba34ecb6437b2";
 
-    document.getElementById("start").onclick = () => {
-      targetTab = window.open(url, "autoRefreshTarget");
+    const refreshSeconds = 10;
+    const targetTabName = "autoRefreshTarget";
 
-      if (!targetTab) {
-        document.getElementById("status").textContent =
-          "Popup blocked. Allow popups for this file and try again.";
+    let refreshTimer = null;
+    let countdownTimer = null;
+    let secondsRemaining = refreshSeconds;
+
+    const startButton = document.getElementById("start");
+    const stopButton = document.getElementById("stop");
+    const statusElement = document.getElementById("status");
+    const statusBox = document.getElementById("statusBox");
+
+    function setStatus(message, state = "") {
+      statusElement.textContent = message;
+      statusBox.className = "status-box";
+
+      if (state) {
+        statusBox.classList.add(state);
+      }
+    }
+
+    function openDashboard() {
+      try {
+        /*
+          Calling window.open with the same name reuses the existing
+          dashboard tab rather than opening a new tab each time.
+        */
+        const openedTab = window.open(url, targetTabName);
+
+        if (!openedTab) {
+          stopRefresh(
+            "Chrome blocked the dashboard tab. Allow pop-ups and try again.",
+            "error"
+          );
+
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        stopRefresh(
+          "Chrome prevented the dashboard from being opened: " +
+            error.message,
+          "error"
+        );
+
+        return false;
+      }
+    }
+
+    function updateCountdown() {
+      setStatus(
+        `Auto refresh is active. Next refresh in ${secondsRemaining} ` +
+          `${secondsRemaining === 1 ? "second" : "seconds"}.`,
+        "running"
+      );
+    }
+
+    function startRefresh() {
+      clearTimers();
+
+      secondsRemaining = refreshSeconds;
+
+      if (!openDashboard()) {
         return;
       }
 
-      clearInterval(timer);
+      startButton.disabled = true;
+      stopButton.disabled = false;
+      updateCountdown();
 
-      timer = setInterval(() => {
-        if (targetTab.closed) {
-          clearInterval(timer);
-          document.getElementById("status").textContent =
-            "Stopped because the target tab was closed.";
+      refreshTimer = setInterval(() => {
+        if (!openDashboard()) {
           return;
         }
 
-        targetTab.location.href = url;
-      }, 10000);
+        secondsRemaining = refreshSeconds;
+        updateCountdown();
+      }, refreshSeconds * 1000);
 
-      document.getElementById("status").textContent =
-        "Refreshing every 10 seconds.";
-    };
+      countdownTimer = setInterval(() => {
+        secondsRemaining--;
 
-    document.getElementById("stop").onclick = () => {
-      clearInterval(timer);
-      document.getElementById("status").textContent = "Stopped.";
-    };
+        if (secondsRemaining <= 0) {
+          secondsRemaining = refreshSeconds;
+        }
+
+        updateCountdown();
+      }, 1000);
+    }
+
+    function clearTimers() {
+      clearInterval(refreshTimer);
+      clearInterval(countdownTimer);
+
+      refreshTimer = null;
+      countdownTimer = null;
+    }
+
+    function stopRefresh(
+      message = "Auto refresh has been stopped.",
+      state = "stopped"
+    ) {
+      clearTimers();
+
+      startButton.disabled = false;
+      stopButton.disabled = true;
+
+      setStatus(message, state);
+    }
+
+    startButton.addEventListener("click", startRefresh);
+
+    stopButton.addEventListener("click", () => {
+      stopRefresh();
+    });
   </script>
 </body>
 </html>
