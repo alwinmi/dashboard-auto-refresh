@@ -2,13 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Dashboard Auto Refresh</title>
 
   <style>
+    :root {
+      --background-dark: #020617;
+      --panel-background: rgba(8, 18, 40, 0.88);
+      --panel-border: rgba(125, 211, 252, 0.22);
+      --text-primary: #f1f5f9;
+      --text-secondary: #a8b8ce;
+      --cyan: #22d3ee;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #fb7185;
+    }
+
     * {
       box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
     }
 
     body {
@@ -18,52 +41,235 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #172033;
+      overflow: hidden;
+      font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        Helvetica,
+        sans-serif;
+      color: var(--text-primary);
       background:
-        radial-gradient(circle at top left, #dceaff 0, transparent 35%),
-        linear-gradient(135deg, #f5f8fc, #e7eef8);
+        radial-gradient(
+          circle at 15% 15%,
+          rgba(37, 99, 235, 0.3),
+          transparent 32%
+        ),
+        radial-gradient(
+          circle at 85% 20%,
+          rgba(124, 58, 237, 0.22),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at 70% 85%,
+          rgba(8, 145, 178, 0.18),
+          transparent 36%
+        ),
+        linear-gradient(
+          135deg,
+          #020617 0%,
+          #07152e 45%,
+          #0f0b2d 100%
+        );
     }
 
-    .card {
+    /*
+      Animated background canvas
+    */
+    #spaceBackground {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
       width: 100%;
-      max-width: 620px;
-      padding: 42px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid #dce4ef;
-      border-radius: 20px;
-      box-shadow: 0 18px 50px rgba(24, 48, 82, 0.15);
+      height: 100%;
+      pointer-events: none;
     }
 
+    /*
+      Decorative background glow
+    */
+    .background-glow {
+      position: fixed;
+      z-index: 0;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .background-glow-left {
+      top: -150px;
+      left: -140px;
+      background: var(--blue);
+    }
+
+    .background-glow-right {
+      right: -160px;
+      bottom: -170px;
+      background: var(--purple);
+    }
+
+    /*
+      Main controller card
+    */
+    .card {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 650px;
+      padding: 42px;
+      overflow: hidden;
+      text-align: center;
+      background:
+        linear-gradient(
+          145deg,
+          rgba(15, 35, 68, 0.94),
+          rgba(5, 15, 35, 0.9)
+        );
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(34, 211, 238, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /*
+      Top illuminated border
+    */
+    .card::before {
+      position: absolute;
+      top: 0;
+      left: 15%;
+      width: 70%;
+      height: 1px;
+      content: "";
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--cyan),
+        var(--purple),
+        transparent
+      );
+      box-shadow: 0 0 16px rgba(34, 211, 238, 0.75);
+    }
+
+    /*
+      Subtle grid within the card
+    */
+    .card::after {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      content: "";
+      opacity: 0.05;
+      background-image:
+        linear-gradient(
+          rgba(255, 255, 255, 0.18) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.18) 1px,
+          transparent 1px
+        );
+      background-size: 30px 30px;
+      pointer-events: none;
+    }
+
+    /*
+      Small heading above the title
+    */
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    /*
+      Refresh icon
+    */
     .icon {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 20px;
+      position: relative;
+      width: 78px;
+      height: 78px;
+      margin: 0 auto 22px;
       display: flex;
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 34px;
-      background: linear-gradient(135deg, #1565c0, #003b80);
-      border-radius: 18px;
-      box-shadow: 0 10px 24px rgba(0, 75, 160, 0.25);
+      font-size: 38px;
+      background:
+        linear-gradient(
+          135deg,
+          var(--cyan),
+          var(--blue) 55%,
+          var(--purple)
+        );
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 22px;
+      box-shadow:
+        0 14px 35px rgba(37, 99, 235, 0.35),
+        0 0 30px rgba(34, 211, 238, 0.2);
+    }
+
+    .icon::after {
+      position: absolute;
+      inset: -7px;
+      content: "";
+      border: 1px solid rgba(34, 211, 238, 0.16);
+      border-radius: 27px;
     }
 
     h1 {
-      margin: 0 0 12px;
-      color: #0d2b4f;
-      font-size: 30px;
+      margin: 0 0 13px;
+      color: var(--text-primary);
+      font-size: 32px;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
     }
 
     .description {
-      max-width: 480px;
-      margin: 0 auto 28px;
-      color: #5d6878;
+      max-width: 500px;
+      margin: 0 auto 30px;
+      color: var(--text-secondary);
       font-size: 16px;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
+    /*
+      Interval display
+    */
+    .interval-badge {
+      width: fit-content;
+      margin: 0 auto 28px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #c4f5ff;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(34, 211, 238, 0.08);
+      border: 1px solid rgba(34, 211, 238, 0.22);
+      border-radius: 999px;
+    }
+
+    .interval-icon {
+      color: var(--cyan);
+      font-size: 15px;
+    }
+
+    /*
+      Buttons
+    */
     .button-container {
       display: flex;
       justify-content: center;
@@ -72,17 +278,25 @@
     }
 
     button {
-      min-width: 190px;
-      padding: 14px 22px;
-      border: none;
-      border-radius: 10px;
+      min-width: 205px;
+      min-height: 50px;
+      padding: 14px 24px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 9px;
+      border-radius: 12px;
+      font-family: inherit;
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 750;
+      letter-spacing: 0.1px;
       cursor: pointer;
       transition:
         transform 0.2s ease,
         box-shadow 0.2s ease,
-        background-color 0.2s ease;
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
     }
 
     button:hover:not(:disabled) {
@@ -94,36 +308,56 @@
     }
 
     button:focus-visible {
-      outline: 3px solid rgba(21, 101, 192, 0.3);
+      outline: 3px solid rgba(34, 211, 238, 0.35);
       outline-offset: 3px;
     }
 
     button:disabled {
-      opacity: 0.55;
+      opacity: 0.42;
       cursor: not-allowed;
     }
 
     #start {
       color: white;
-      background: linear-gradient(135deg, #1565c0, #003b80);
-      box-shadow: 0 8px 18px rgba(0, 75, 160, 0.25);
+      background:
+        linear-gradient(
+          135deg,
+          #0891b2,
+          #2563eb 60%,
+          #6d28d9
+        );
+      border: 1px solid rgba(125, 211, 252, 0.35);
+      box-shadow:
+        0 10px 25px rgba(37, 99, 235, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
     }
 
     #start:hover:not(:disabled) {
-      box-shadow: 0 12px 24px rgba(0, 75, 160, 0.32);
+      box-shadow:
+        0 15px 32px rgba(37, 99, 235, 0.4),
+        0 0 24px rgba(34, 211, 238, 0.16);
     }
 
     #stop {
-      color: #9e2a2b;
-      background: #fff;
-      border: 2px solid #d8a3a3;
+      color: #fecdd3;
+      background: rgba(244, 63, 94, 0.07);
+      border: 1px solid rgba(251, 113, 133, 0.38);
     }
 
     #stop:hover:not(:disabled) {
-      background: #fff4f4;
-      border-color: #bf5a5a;
+      color: white;
+      background: rgba(244, 63, 94, 0.17);
+      border-color: rgba(251, 113, 133, 0.7);
+      box-shadow: 0 12px 25px rgba(244, 63, 94, 0.15);
     }
 
+    .button-icon {
+      font-size: 16px;
+    }
+
+    /*
+      Status display
+    */
     .status-box {
       margin-top: 28px;
       padding: 17px 20px;
@@ -131,137 +365,228 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      background: #f3f6fa;
-      border: 1px solid #dbe3ed;
-      border-radius: 12px;
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px solid rgba(148, 163, 184, 0.17);
+      border-radius: 13px;
+      transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
     }
 
     .status-dot {
       width: 11px;
       height: 11px;
       flex-shrink: 0;
-      background: #7a8696;
+      background: #64748b;
       border-radius: 50%;
+      box-shadow: 0 0 10px rgba(100, 116, 139, 0.5);
     }
 
     #status {
       margin: 0;
-      color: #4a5666;
-      font-weight: 600;
+      color: #bdc9da;
+      font-size: 14px;
+      font-weight: 650;
       line-height: 1.5;
     }
 
+    /*
+      Running status
+    */
     .status-box.running {
-      background: #eef8f2;
-      border-color: #aad5bb;
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(52, 211, 153, 0.3);
+      box-shadow: inset 0 0 25px rgba(16, 185, 129, 0.035);
     }
 
     .status-box.running .status-dot {
-      background: #218c4f;
+      background: var(--green);
+      box-shadow: 0 0 14px rgba(52, 211, 153, 0.85);
       animation: pulse 1.5s infinite;
     }
 
     .status-box.running #status {
-      color: #17683a;
+      color: #a7f3d0;
     }
 
+    /*
+      Stopped status
+    */
     .status-box.stopped {
-      background: #fff8e8;
-      border-color: #e4c986;
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(251, 191, 36, 0.3);
     }
 
     .status-box.stopped .status-dot {
-      background: #c48300;
+      background: var(--yellow);
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.7);
     }
 
+    .status-box.stopped #status {
+      color: #fde68a;
+    }
+
+    /*
+      Error status
+    */
     .status-box.error {
-      background: #fff1f1;
-      border-color: #e5aaaa;
+      background: rgba(244, 63, 94, 0.09);
+      border-color: rgba(251, 113, 133, 0.35);
     }
 
     .status-box.error .status-dot {
-      background: #c23535;
+      background: var(--red);
+      box-shadow: 0 0 12px rgba(251, 113, 133, 0.75);
     }
 
     .status-box.error #status {
-      color: #922c2c;
+      color: #fecdd3;
     }
 
+    /*
+      Footer note
+    */
     .note {
       margin: 22px 0 0;
-      color: #707b8b;
+      color: #8191a8;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.6;
+    }
+
+    .note strong {
+      color: #b7c7dc;
     }
 
     @keyframes pulse {
       0% {
-        box-shadow: 0 0 0 0 rgba(33, 140, 79, 0.45);
+        box-shadow:
+          0 0 0 0 rgba(52, 211, 153, 0.55),
+          0 0 12px rgba(52, 211, 153, 0.8);
       }
 
       70% {
-        box-shadow: 0 0 0 8px rgba(33, 140, 79, 0);
+        box-shadow:
+          0 0 0 8px rgba(52, 211, 153, 0),
+          0 0 14px rgba(52, 211, 153, 0.8);
       }
 
       100% {
-        box-shadow: 0 0 0 0 rgba(33, 140, 79, 0);
+        box-shadow:
+          0 0 0 0 rgba(52, 211, 153, 0),
+          0 0 12px rgba(52, 211, 153, 0.8);
       }
     }
 
+    /*
+      Mobile layout
+    */
     @media (max-width: 600px) {
       body {
         padding: 15px;
+        overflow-y: auto;
       }
 
       .card {
-        padding: 30px 20px;
+        padding: 32px 20px;
+        border-radius: 20px;
+      }
+
+      .icon {
+        width: 68px;
+        height: 68px;
+        font-size: 33px;
       }
 
       h1 {
-        font-size: 25px;
+        font-size: 26px;
+      }
+
+      .description {
+        font-size: 15px;
       }
 
       button {
         width: 100%;
+        min-width: 0;
+      }
+
+      .status-box {
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .status-dot {
+        margin-top: 5px;
       }
     }
   </style>
 </head>
 
 <body>
+  <!-- Moving space background -->
+  <canvas
+    id="spaceBackground"
+    aria-hidden="true"
+  ></canvas>
+
+  <!-- Decorative background lighting -->
+  <div
+    class="background-glow background-glow-left"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="background-glow background-glow-right"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Main controller -->
   <main class="card">
     <div class="icon" aria-hidden="true">↻</div>
+
+    <p class="eyebrow">Dashboard Controller</p>
 
     <h1>Dashboard Auto Refresh</h1>
 
     <p class="description">
-      Open the ServiceNow dashboard in a separate tab and automatically
-      refresh it every 10 seconds.
+      Launch the ServiceNow dashboard in a separate tab and keep its
+      information automatically refreshed.
     </p>
+
+    <div class="interval-badge">
+      <span class="interval-icon" aria-hidden="true">◷</span>
+      <span>Refresh interval: 10 seconds</span>
+    </div>
 
     <div class="button-container">
       <button id="start" type="button">
-        Start auto refresh
+        <span class="button-icon" aria-hidden="true">▶</span>
+        <span>Start auto refresh</span>
       </button>
 
       <button id="stop" type="button" disabled>
-        Stop refreshing
+        <span class="button-icon" aria-hidden="true">■</span>
+        <span>Stop refreshing</span>
       </button>
     </div>
 
     <div id="statusBox" class="status-box">
       <span class="status-dot" aria-hidden="true"></span>
+
       <p id="status" role="status" aria-live="polite">
         Auto refresh has not started.
       </p>
     </div>
 
     <p class="note">
-      Keep this controller page open. Allow pop-ups if Chrome asks for
-      permission. The ServiceNow dashboard will open in another tab.
+      <strong>Keep this controller page open.</strong>
+      Allow pop-ups if Chrome requests permission. The dashboard will
+      reuse the same separate tab.
     </p>
   </main>
 
+  <!-- Dashboard refresh logic -->
   <script>
     const url =
       "https://roche.service-now.com/now/platform-analytics-workspace/dashboards/params/edit/false/sys-id/84f23971c271d2a1f8aba34ecb6437b2";
@@ -273,10 +598,17 @@
     let countdownTimer = null;
     let secondsRemaining = refreshSeconds;
 
-    const startButton = document.getElementById("start");
-    const stopButton = document.getElementById("stop");
-    const statusElement = document.getElementById("status");
-    const statusBox = document.getElementById("statusBox");
+    const startButton =
+      document.getElementById("start");
+
+    const stopButton =
+      document.getElementById("stop");
+
+    const statusElement =
+      document.getElementById("status");
+
+    const statusBox =
+      document.getElementById("statusBox");
 
     function setStatus(message, state = "") {
       statusElement.textContent = message;
@@ -290,10 +622,10 @@
     function openDashboard() {
       try {
         /*
-          Calling window.open with the same name reuses the existing
-          dashboard tab rather than opening a new tab each time.
+          Reuse the same named tab during every refresh.
         */
-        const openedTab = window.open(url, targetTabName);
+        const openedTab =
+          window.open(url, targetTabName);
 
         if (!openedTab) {
           stopRefresh(
@@ -317,11 +649,24 @@
     }
 
     function updateCountdown() {
+      const secondLabel =
+        secondsRemaining === 1
+          ? "second"
+          : "seconds";
+
       setStatus(
-        `Auto refresh is active. Next refresh in ${secondsRemaining} ` +
-          `${secondsRemaining === 1 ? "second" : "seconds"}.`,
+        `Auto refresh is active. Next refresh in ` +
+          `${secondsRemaining} ${secondLabel}.`,
         "running"
       );
+    }
+
+    function clearTimers() {
+      clearInterval(refreshTimer);
+      clearInterval(countdownTimer);
+
+      refreshTimer = null;
+      countdownTimer = null;
     }
 
     function startRefresh() {
@@ -335,6 +680,7 @@
 
       startButton.disabled = true;
       stopButton.disabled = false;
+
       updateCountdown();
 
       refreshTimer = setInterval(() => {
@@ -357,14 +703,6 @@
       }, 1000);
     }
 
-    function clearTimers() {
-      clearInterval(refreshTimer);
-      clearInterval(countdownTimer);
-
-      refreshTimer = null;
-      countdownTimer = null;
-    }
-
     function stopRefresh(
       message = "Auto refresh has been stopped.",
       state = "stopped"
@@ -377,11 +715,522 @@
       setStatus(message, state);
     }
 
-    startButton.addEventListener("click", startRefresh);
+    startButton.addEventListener(
+      "click",
+      startRefresh
+    );
 
-    stopButton.addEventListener("click", () => {
-      stopRefresh();
-    });
+    stopButton.addEventListener(
+      "click",
+      () => {
+        stopRefresh();
+      }
+    );
+  </script>
+
+  <!-- Animated stars and spaceships -->
+  <script>
+    const spaceCanvas =
+      document.getElementById("spaceBackground");
+
+    const spaceContext =
+      spaceCanvas.getContext("2d");
+
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+    let stars = [];
+    let spaceships = [];
+    let previousFrameTime = 0;
+    let lastShipTime = 0;
+
+    function resizeSpaceCanvas() {
+      const pixelRatio = Math.min(
+        window.devicePixelRatio || 1,
+        2
+      );
+
+      canvasWidth = window.innerWidth;
+      canvasHeight = window.innerHeight;
+
+      spaceCanvas.width =
+        canvasWidth * pixelRatio;
+
+      spaceCanvas.height =
+        canvasHeight * pixelRatio;
+
+      spaceCanvas.style.width =
+        `${canvasWidth}px`;
+
+      spaceCanvas.style.height =
+        `${canvasHeight}px`;
+
+      spaceContext.setTransform(
+        pixelRatio,
+        0,
+        0,
+        pixelRatio,
+        0,
+        0
+      );
+
+      createStars();
+    }
+
+    /*
+      Create a field of stars at different depths.
+    */
+    function createStars() {
+      const starCount = Math.min(
+        260,
+        Math.max(
+          110,
+          Math.floor(
+            (canvasWidth * canvasHeight) / 5200
+          )
+        )
+      );
+
+      stars = Array.from(
+        { length: starCount },
+        () => createStar()
+      );
+    }
+
+    function createStar(startAtRight = false) {
+      const depth = Math.random();
+
+      return {
+        x: startAtRight
+          ? canvasWidth + Math.random() * 40
+          : Math.random() * canvasWidth,
+
+        y: Math.random() * canvasHeight,
+
+        radius: 0.45 + depth * 1.55,
+
+        opacity:
+          Math.random() * 0.55 + 0.35,
+
+        speed:
+          15 + depth * 72,
+
+        twinkleSpeed:
+          Math.random() * 1.4 + 0.45,
+
+        twinkleDirection:
+          Math.random() > 0.5 ? 1 : -1,
+
+        colorType:
+          Math.random()
+      };
+    }
+
+    /*
+      Move and draw stars.
+    */
+    function drawStars(deltaTime) {
+      for (
+        let index = 0;
+        index < stars.length;
+        index++
+      ) {
+        const star = stars[index];
+
+        star.x -= star.speed * deltaTime;
+
+        star.opacity +=
+          star.twinkleSpeed *
+          star.twinkleDirection *
+          deltaTime;
+
+        if (star.opacity >= 1) {
+          star.opacity = 1;
+          star.twinkleDirection = -1;
+        } else if (star.opacity <= 0.22) {
+          star.opacity = 0.22;
+          star.twinkleDirection = 1;
+        }
+
+        if (star.x < -25) {
+          stars[index] = createStar(true);
+          continue;
+        }
+
+        /*
+          Give a few stars a subtle blue or purple tone.
+        */
+        let red = 255;
+        let green = 255;
+        let blue = 255;
+
+        if (star.colorType < 0.12) {
+          red = 125;
+          green = 211;
+          blue = 252;
+        } else if (star.colorType < 0.2) {
+          red = 196;
+          green = 181;
+          blue = 253;
+        }
+
+        const trailLength =
+          3 + (star.speed / 87) * 15;
+
+        const trailGradient =
+          spaceContext.createLinearGradient(
+            star.x,
+            star.y,
+            star.x + trailLength,
+            star.y
+          );
+
+        trailGradient.addColorStop(
+          0,
+          `rgba(${red}, ${green}, ${blue}, ` +
+            `${star.opacity})`
+        );
+
+        trailGradient.addColorStop(
+          1,
+          `rgba(${red}, ${green}, ${blue}, 0)`
+        );
+
+        spaceContext.beginPath();
+
+        spaceContext.moveTo(
+          star.x,
+          star.y
+        );
+
+        spaceContext.lineTo(
+          star.x + trailLength,
+          star.y
+        );
+
+        spaceContext.strokeStyle =
+          trailGradient;
+
+        spaceContext.lineWidth =
+          Math.max(0.6, star.radius * 0.7);
+
+        spaceContext.stroke();
+
+        spaceContext.beginPath();
+
+        spaceContext.arc(
+          star.x,
+          star.y,
+          star.radius,
+          0,
+          Math.PI * 2
+        );
+
+        spaceContext.fillStyle =
+          `rgba(${red}, ${green}, ${blue}, ` +
+          `${star.opacity})`;
+
+        spaceContext.fill();
+      }
+    }
+
+    /*
+      Create a passing spaceship.
+    */
+    function createSpaceship() {
+      const direction =
+        Math.random() > 0.5 ? 1 : -1;
+
+      const startingY =
+        60 +
+        Math.random() *
+          Math.max(canvasHeight - 120, 100);
+
+      spaceships.push({
+        x:
+          direction === 1
+            ? -130
+            : canvasWidth + 130,
+
+        y: startingY,
+        originalY: startingY,
+
+        speed:
+          (Math.random() * 45 + 75) *
+          direction,
+
+        direction,
+
+        scale:
+          Math.random() * 0.32 + 0.52,
+
+        wavePosition:
+          Math.random() * Math.PI * 2,
+
+        waveSpeed:
+          Math.random() * 1.2 + 1,
+
+        waveAmount:
+          Math.random() * 5 + 3
+      });
+    }
+
+    /*
+      Draw a spaceship.
+    */
+    function drawSpaceship(ship) {
+      spaceContext.save();
+
+      spaceContext.translate(
+        ship.x,
+        ship.y
+      );
+
+      spaceContext.scale(
+        ship.scale * ship.direction,
+        ship.scale
+      );
+
+      /*
+        Engine glow
+      */
+      const engineGlow =
+        spaceContext.createLinearGradient(
+          -70,
+          0,
+          -20,
+          0
+        );
+
+      engineGlow.addColorStop(
+        0,
+        "rgba(34, 211, 238, 0)"
+      );
+
+      engineGlow.addColorStop(
+        0.55,
+        "rgba(34, 211, 238, 0.45)"
+      );
+
+      engineGlow.addColorStop(
+        1,
+        "rgba(125, 211, 252, 1)"
+      );
+
+      spaceContext.beginPath();
+      spaceContext.moveTo(-70, 0);
+      spaceContext.lineTo(-24, -9);
+      spaceContext.lineTo(-24, 9);
+      spaceContext.closePath();
+
+      spaceContext.fillStyle = engineGlow;
+      spaceContext.fill();
+
+      /*
+        Ship body
+      */
+      spaceContext.beginPath();
+      spaceContext.moveTo(42, 0);
+
+      spaceContext.quadraticCurveTo(
+        14,
+        -20,
+        -29,
+        -12
+      );
+
+      spaceContext.lineTo(-41, 0);
+      spaceContext.lineTo(-29, 12);
+
+      spaceContext.quadraticCurveTo(
+        14,
+        20,
+        42,
+        0
+      );
+
+      spaceContext.closePath();
+
+      const bodyGradient =
+        spaceContext.createLinearGradient(
+          0,
+          -20,
+          0,
+          20
+        );
+
+      bodyGradient.addColorStop(
+        0,
+        "#f0f9ff"
+      );
+
+      bodyGradient.addColorStop(
+        0.45,
+        "#38bdf8"
+      );
+
+      bodyGradient.addColorStop(
+        1,
+        "#4338ca"
+      );
+
+      spaceContext.fillStyle =
+        bodyGradient;
+
+      spaceContext.fill();
+
+      spaceContext.strokeStyle =
+        "rgba(186, 230, 253, 0.8)";
+
+      spaceContext.lineWidth = 1.2;
+      spaceContext.stroke();
+
+      /*
+        Window
+      */
+      spaceContext.beginPath();
+
+      spaceContext.ellipse(
+        10,
+        -5,
+        9,
+        6,
+        0,
+        0,
+        Math.PI * 2
+      );
+
+      spaceContext.fillStyle = "#67e8f9";
+      spaceContext.fill();
+
+      spaceContext.strokeStyle =
+        "rgba(255, 255, 255, 0.9)";
+
+      spaceContext.lineWidth = 1.5;
+      spaceContext.stroke();
+
+      /*
+        Lower wing
+      */
+      spaceContext.beginPath();
+      spaceContext.moveTo(-5, 8);
+      spaceContext.lineTo(-25, 28);
+      spaceContext.lineTo(17, 12);
+      spaceContext.closePath();
+
+      spaceContext.fillStyle = "#3730a3";
+      spaceContext.fill();
+
+      /*
+        Upper fin
+      */
+      spaceContext.beginPath();
+      spaceContext.moveTo(-12, -10);
+      spaceContext.lineTo(-28, -25);
+      spaceContext.lineTo(7, -14);
+      spaceContext.closePath();
+
+      spaceContext.fillStyle = "#2563eb";
+      spaceContext.fill();
+
+      spaceContext.restore();
+    }
+
+    /*
+      Move and draw the spaceships.
+    */
+    function updateSpaceships(
+      timestamp,
+      deltaTime
+    ) {
+      if (
+        timestamp - lastShipTime >= 7000 &&
+        spaceships.length < 2
+      ) {
+        createSpaceship();
+        lastShipTime = timestamp;
+      }
+
+      for (
+        let index = spaceships.length - 1;
+        index >= 0;
+        index--
+      ) {
+        const ship = spaceships[index];
+
+        ship.x += ship.speed * deltaTime;
+
+        ship.wavePosition +=
+          ship.waveSpeed * deltaTime;
+
+        ship.y =
+          ship.originalY +
+          Math.sin(ship.wavePosition) *
+            ship.waveAmount;
+
+        drawSpaceship(ship);
+
+        const hasLeftScreen =
+          ship.direction === 1
+            ? ship.x > canvasWidth + 150
+            : ship.x < -150;
+
+        if (hasLeftScreen) {
+          spaceships.splice(index, 1);
+        }
+      }
+    }
+
+    /*
+      Main background animation.
+    */
+    function animateSpace(timestamp) {
+      if (!previousFrameTime) {
+        previousFrameTime = timestamp;
+      }
+
+      const deltaTime = Math.min(
+        (timestamp - previousFrameTime) / 1000,
+        0.05
+      );
+
+      previousFrameTime = timestamp;
+
+      spaceContext.clearRect(
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+      );
+
+      drawStars(deltaTime);
+
+      updateSpaceships(
+        timestamp,
+        deltaTime
+      );
+
+      window.requestAnimationFrame(
+        animateSpace
+      );
+    }
+
+    window.addEventListener(
+      "resize",
+      resizeSpaceCanvas
+    );
+
+    resizeSpaceCanvas();
+
+    /*
+      Display the first spaceship shortly after loading.
+    */
+    window.setTimeout(() => {
+      createSpaceship();
+    }, 1200);
+
+    window.requestAnimationFrame(
+      animateSpace
+    );
   </script>
 </body>
 </html>
